@@ -7,9 +7,12 @@ import { BACKEND_URL } from "../../Utils/constant";
 
 const ResearchManager = () => {
   const [papers, setPapers] = useState([]);
+  const [total, setTotal] = useState(0);
   const [mode, setMode] = useState("list");
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [form, setForm] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,11 +20,14 @@ const ResearchManager = () => {
     if (token) axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   }, []);
 
-  const fetchPapers = async () => {
+  const fetchPapers = async (currentPage = 1) => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/research-papers`);
-      const docs = res?.data?.data || res?.data?.docs || [];
-      setPapers(docs);
+      const res = await axios.get(`${BACKEND_URL}/research-papers?page=${currentPage}&limit=${limit}`);
+      const data = res?.data?.data || { papers: [], total: 0 };
+      console.log(data)
+      setPapers(data.papers || []);
+      setTotal(data.total || 0);
+      setPage(currentPage);
     } catch (err) {
       toast.error("Failed to load papers.");
       console.error("Fetch error:", err);
@@ -46,24 +52,18 @@ const ResearchManager = () => {
     setMode("edit");
   };
 
-const handleDelete = async (paperId) => {
-  if (!window.confirm("Are you sure you want to delete this paper?")) return;
-
-  try {
-    await axios.delete(`${BACKEND_URL}/research-papers/${paperId}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
-    });
-    toast.success("Paper deleted successfully");
-    fetchPapers();
-    setMode("list");
-  } catch (err) {
-    console.error("Delete failed:", err?.response?.data || err);
-    toast.error("Failed to delete paper");
-  }
-};
-
+  const handleDelete = async (paperId) => {
+    if (!window.confirm("Are you sure you want to delete this paper?")) return;
+    try {
+      await axios.delete(`${BACKEND_URL}/research-papers/${paperId}`);
+      toast.success("Paper deleted successfully");
+      fetchPapers(page);
+      setMode("list");
+    } catch (err) {
+      console.error("Delete failed:", err?.response?.data || err);
+      toast.error("Failed to delete paper");
+    }
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -87,13 +87,15 @@ const handleDelete = async (paperId) => {
     try {
       await axios.put(`${BACKEND_URL}/research-papers/${selectedPaper._id}`, form);
       toast.success("Paper updated successfully!");
-      fetchPapers();
+      fetchPapers(page);
       setMode("list");
     } catch (err) {
       console.error("Update failed", err?.response?.data || err);
       toast.error("Failed to update paper.");
     }
   };
+
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="p-6 max-w-7xl mx-auto text-black">
@@ -166,22 +168,13 @@ const handleDelete = async (paperId) => {
                     </div>
                   </div>
                   <div className="mt-4 flex gap-3">
-                    <button
-                      onClick={() => handleView(paper)}
-                      className="text-blue-600 font-medium hover:underline"
-                    >
+                    <button onClick={() => handleView(paper)} className="text-blue-600 font-medium hover:underline">
                       View
                     </button>
-                    <button
-                      onClick={() => handleEdit(paper)}
-                      className="text-green-600 font-medium hover:underline"
-                    >
+                    <button onClick={() => handleEdit(paper)} className="text-green-600 font-medium hover:underline">
                       Edit
                     </button>
-                    <button
-                      onClick={() => handleDelete(paper._id)}
-                      className="text-red-600 font-medium hover:underline"
-                    >
+                    <button onClick={() => handleDelete(paper._id)} className="text-red-600 font-medium hover:underline">
                       Delete
                     </button>
                   </div>
@@ -189,6 +182,21 @@ const handleDelete = async (paperId) => {
               ))
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => fetchPapers(p)}
+                  className={`px-3 py-1 rounded ${p === page ? "bg-blue-600 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
         </>
       )}
 
@@ -204,15 +212,7 @@ const handleDelete = async (paperId) => {
             {selectedPaper.authors.map((a) => a.name).join(", ")}
           </p>
           <div className="grid gap-4 mt-4">
-            {[
-              "abstract",
-              "introduction",
-              "relatedWork",
-              "methodology",
-              "experimentalResults",
-              "discussion",
-              "conclusion",
-            ].map((key) => (
+            {["abstract","introduction","relatedWork","methodology","experimentalResults","discussion","conclusion"].map((key) => (
               <div key={key}>
                 <h3 className="font-semibold capitalize border-b pb-1 text-gray-700">{key}</h3>
                 <p className="text-gray-800">{selectedPaper[key]}</p>
@@ -233,15 +233,7 @@ const handleDelete = async (paperId) => {
             className="w-full border px-4 py-2 rounded"
             required
           />
-          {[
-            "abstract",
-            "introduction",
-            "relatedWork",
-            "methodology",
-            "experimentalResults",
-            "discussion",
-            "conclusion",
-          ].map((key) => (
+          {["abstract","introduction","relatedWork","methodology","experimentalResults","discussion","conclusion"].map((key) => (
             <textarea
               key={key}
               name={key}
@@ -297,10 +289,7 @@ const handleDelete = async (paperId) => {
             </button>
           </div>
 
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-          >
+          <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
             Save Changes
           </button>
         </form>

@@ -9,17 +9,17 @@ const PaperCreate = () => {
   const [form, setForm] = useState({
     title: "",
     abstract: "",
+    keywords: "",
     introduction: "",
     relatedWork: "",
     methodology: "",
     experimentalResults: "",
     discussion: "",
     conclusion: "",
+    references: "",
     publicationDate: "",
     authors: [
       {
-        name: "",
-        email: "",
         affiliation: "",
       },
     ],
@@ -38,7 +38,7 @@ const PaperCreate = () => {
   const addAuthor = () => {
     setForm({
       ...form,
-      authors: [...form.authors, { name: "", email: "", affiliation: "" }],
+      authors: [...form.authors, { affiliation: "" }],
     });
   };
 
@@ -65,11 +65,16 @@ const PaperCreate = () => {
   return (
     <div className="p-8 max-w-5xl mx-auto bg-white shadow-lg rounded-xl pt-24">
       <Toaster position="top-right" />
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Create Research Paper</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        Create Research Paper
+      </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Title
+          </label>
           <input
             type="text"
             name="title"
@@ -80,8 +85,39 @@ const PaperCreate = () => {
           />
         </div>
 
+        {/* Abstract */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Abstract
+          </label>
+          <textarea
+            name="abstract"
+            value={form.abstract}
+            onChange={handleChange}
+            rows={5}
+            className="w-full border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        {/* Keywords */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Keywords
+          </label>
+          <input
+            type="text"
+            name="keywords"
+            value={form.keywords}
+            onChange={handleChange}
+            placeholder="e.g. AI, Machine Learning, Healthcare"
+            className="w-full border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        {/* Other sections */}
         {[
-          "abstract",
           "introduction",
           "relatedWork",
           "methodology",
@@ -104,8 +140,25 @@ const PaperCreate = () => {
           </div>
         ))}
 
+        {/* References */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Publication Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            References
+          </label>
+          <textarea
+            name="references"
+            value={form.references}
+            onChange={handleChange}
+            rows={5}
+            className="w-full border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Publication Date */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Publication Date
+          </label>
           <input
             type="date"
             name="publicationDate"
@@ -116,40 +169,28 @@ const PaperCreate = () => {
           />
         </div>
 
+        {/* Authors (only affiliation now) */}
         <div>
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Authors</h2>
           <div className="space-y-4">
             {form.authors.map((author, i) => (
-              <div key={i} className="bg-gray-50 border rounded-md p-4 shadow-sm space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                    <input
-                      type="text"
-                      value={author.name}
-                      onChange={(e) => handleAuthorChange(i, "name", e.target.value)}
-                      className="w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={author.email}
-                      onChange={(e) => handleAuthorChange(i, "email", e.target.value)}
-                      className="w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Affiliation</label>
-                    <input
-                      type="text"
-                      value={author.affiliation}
-                      onChange={(e) => handleAuthorChange(i, "affiliation", e.target.value)}
-                      className="w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  </div>
+              <div
+                key={i}
+                className="bg-gray-50 border rounded-md p-4 shadow-sm space-y-3"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Affiliation
+                  </label>
+                  <input
+                    type="text"
+                    value={author.affiliation}
+                    onChange={(e) =>
+                      handleAuthorChange(i, "affiliation", e.target.value)
+                    }
+                    className="w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    required
+                  />
                 </div>
               </div>
             ))}
@@ -164,6 +205,7 @@ const PaperCreate = () => {
           </button>
         </div>
 
+        {/* Submit */}
         <div className="pt-6">
           <button
             type="submit"
