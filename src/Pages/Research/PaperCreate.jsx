@@ -7,23 +7,28 @@ import { BACKEND_URL } from "../../Utils/constant";
 const PaperCreate = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
+    name: "",
     title: "",
     abstract: "",
     keywords: "",
     introduction: "",
-    relatedWork: "",
+    objective: "",
     methodology: "",
     experimentalResults: "",
     discussion: "",
     conclusion: "",
     references: "",
     publicationDate: "",
+    category: "",
     authors: [
       {
         affiliation: "",
       },
     ],
   });
+
+  // New state for PDF file
+  const [pdfFile, setPdfFile] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -42,14 +47,34 @@ const PaperCreate = () => {
     });
   };
 
+  const handlePdfChange = (e) => {
+    setPdfFile(e.target.files[0]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("authToken");
-      await axios.post(`${BACKEND_URL}/research-papers`, form, {
+      const formData = new FormData();
+
+      // Append all form fields
+      Object.entries(form).forEach(([key, value]) => {
+        if (key === "authors") {
+          formData.append("authors", JSON.stringify(value));
+        } else {
+          formData.append(key, value);
+        }
+      });
+
+      // Append PDF file
+      if (pdfFile) {
+        formData.append("pdf", pdfFile);
+      }
+
+      await axios.post(`${BACKEND_URL}/research-papers`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
         },
         withCredentials: true,
       });
@@ -70,6 +95,44 @@ const PaperCreate = () => {
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Name
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            className="w-full border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Category
+          </label>
+          <select
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            className="w-full border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">Select Category</option>
+            <option value="Business">Business</option>
+            <option value="Psychology">Psychology</option>
+            <option value="Design">Design</option>
+            <option value="Technology">Technology</option>
+            <option value="Humanities">Humanities</option>
+            <option value="Communities">Communities</option>
+            <option value="Philosophy">Philosophy</option>
+          </select>
+        </div>
+
         {/* Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -119,7 +182,7 @@ const PaperCreate = () => {
         {/* Other sections */}
         {[
           "introduction",
-          "relatedWork",
+          "objective", // changed from "relatedWork" to "objective"
           "methodology",
           "experimentalResults",
           "discussion",
@@ -203,6 +266,20 @@ const PaperCreate = () => {
           >
             Add Another Author
           </button>
+        </div>
+
+        {/* PDF Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Upload Research Paper PDF
+          </label>
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={handlePdfChange}
+            className="w-full border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none"
+            required
+          />
         </div>
 
         {/* Submit */}
