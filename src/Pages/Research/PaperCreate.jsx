@@ -7,12 +7,12 @@ import { BACKEND_URL } from "../../Utils/constant";
 const PaperCreate = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    name: "",
     title: "",
     abstract: "",
     keywords: "",
     introduction: "",
     objective: "",
+    literature: "",
     methodology: "",
     experimentalResults: "",
     discussion: "",
@@ -22,12 +22,17 @@ const PaperCreate = () => {
     category: "",
     authors: [
       {
+        name: "",
         affiliation: "",
+      },
+    ],
+    mentors: [
+      {
+        name: "",
       },
     ],
   });
 
-  // New state for PDF file
   const [pdfFile, setPdfFile] = useState(null);
 
   const handleChange = (e) => {
@@ -43,8 +48,34 @@ const PaperCreate = () => {
   const addAuthor = () => {
     setForm({
       ...form,
-      authors: [...form.authors, { affiliation: "" }],
+      authors: [...form.authors, { name: "", affiliation: "" }],
     });
+  };
+
+  const removeAuthor = (index) => {
+    const updatedAuthors = [...form.authors];
+    updatedAuthors.splice(index, 1);
+    setForm({ ...form, authors: updatedAuthors });
+  };
+
+  // Mentor handlers
+  const handleMentorChange = (index, value) => {
+    const updatedMentors = [...form.mentors];
+    updatedMentors[index].name = value;
+    setForm({ ...form, mentors: updatedMentors });
+  };
+
+  const addMentor = () => {
+    setForm({
+      ...form,
+      mentors: [...form.mentors, { name: "" }],
+    });
+  };
+
+  const removeMentor = (index) => {
+    const updatedMentors = [...form.mentors];
+    updatedMentors.splice(index, 1);
+    setForm({ ...form, mentors: updatedMentors });
   };
 
   const handlePdfChange = (e) => {
@@ -57,16 +88,14 @@ const PaperCreate = () => {
       const token = localStorage.getItem("authToken");
       const formData = new FormData();
 
-      // Append all form fields
       Object.entries(form).forEach(([key, value]) => {
-        if (key === "authors") {
-          formData.append("authors", JSON.stringify(value));
+        if (key === "authors" || key === "mentors") {
+          formData.append(key, JSON.stringify(value));
         } else {
           formData.append(key, value);
         }
       });
 
-      // Append PDF file
       if (pdfFile) {
         formData.append("pdf", pdfFile);
       }
@@ -83,33 +112,20 @@ const PaperCreate = () => {
       setTimeout(() => navigate("/research"), 1500);
     } catch (err) {
       console.error("Error creating paper", err);
-      toast.error("Failed to create research paper.");
+      // Show backend error message if available
+      const backendMsg = err?.response?.data?.message || "Failed to create research paper.";
+      toast.error(backendMsg);
     }
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto bg-white shadow-lg rounded-xl pt-24">
+    <div className="p-8 max-w-5xl mx-auto bg-white shadow-lg rounded-xl pt-24" style={{ overflow: "visible" }}>
       <Toaster position="top-right" />
       <h1 className="text-3xl font-bold text-gray-900 mb-8">
         Create Research Paper
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Name
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="w-full border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-
         {/* Category */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -179,10 +195,112 @@ const PaperCreate = () => {
           />
         </div>
 
+        {/* Authors (name and affiliation side by side) */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Authors</h2>
+          <div className="space-y-4">
+            {form.authors.map((author, i) => (
+              <div
+                key={i}
+                className="bg-gray-50 border rounded-md p-4 shadow-sm flex gap-4 items-center"
+              >
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={author.name}
+                    onChange={(e) =>
+                      handleAuthorChange(i, "name", e.target.value)
+                    }
+                    className="w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Affiliation
+                  </label>
+                  <input
+                    type="text"
+                    value={author.affiliation}
+                    onChange={(e) =>
+                      handleAuthorChange(i, "affiliation", e.target.value)
+                    }
+                    className="w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    required
+                  />
+                </div>
+                {form.authors.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeAuthor(i)}
+                    className="ml-2 text-red-500 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addAuthor}
+            className="mt-4 px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-200 transition"
+          >
+            Add Another Author
+          </button>
+        </div>
+
+        {/* Mentors (only name) */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Mentors</h2>
+          <div className="space-y-4">
+            {form.mentors.map((mentor, i) => (
+              <div
+                key={i}
+                className="bg-gray-50 border rounded-md p-4 shadow-sm flex gap-4 items-center"
+              >
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={mentor.name}
+                    onChange={(e) =>
+                      handleMentorChange(i, e.target.value)
+                    }
+                    className="w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                {form.mentors.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeMentor(i)}
+                    className="ml-2 text-red-500 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addMentor}
+            className="mt-4 px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-200 transition"
+          >
+            Add Mentor
+          </button>
+        </div>
+
         {/* Other sections */}
         {[
           "introduction",
-          "objective", // changed from "relatedWork" to "objective"
+          "objective",
+          "literature",
           "methodology",
           "experimentalResults",
           "discussion",
@@ -198,7 +316,7 @@ const PaperCreate = () => {
               onChange={handleChange}
               rows={5}
               className="w-full border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              required={section !== "literature"}
             />
           </div>
         ))}
@@ -232,42 +350,6 @@ const PaperCreate = () => {
           />
         </div>
 
-        {/* Authors (only affiliation now) */}
-        <div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Authors</h2>
-          <div className="space-y-4">
-            {form.authors.map((author, i) => (
-              <div
-                key={i}
-                className="bg-gray-50 border rounded-md p-4 shadow-sm space-y-3"
-              >
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Affiliation
-                  </label>
-                  <input
-                    type="text"
-                    value={author.affiliation}
-                    onChange={(e) =>
-                      handleAuthorChange(i, "affiliation", e.target.value)
-                    }
-                    className="w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={addAuthor}
-            className="mt-4 px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-200 transition"
-          >
-            Add Another Author
-          </button>
-        </div>
-
         {/* PDF Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -291,9 +373,12 @@ const PaperCreate = () => {
             Submit Research Paper
           </button>
         </div>
+
       </form>
     </div>
+    
   );
 };
 
 export default PaperCreate;
+

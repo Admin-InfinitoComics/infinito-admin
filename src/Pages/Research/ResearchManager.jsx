@@ -209,15 +209,38 @@ const ResearchManager = () => {
           </p>
           <p>
             <strong className="text-gray-700">Authors:</strong>{" "}
-            {selectedPaper.authors.map((a) => a.name).join(", ")}
+            {selectedPaper.authors.map((a) =>
+              a.affiliation
+                ? `${a.name} (${a.affiliation})`
+                : a.name
+            ).join(", ")}
+          </p>
+          <p>
+            <strong className="text-gray-700">Mentors:</strong>{" "}
+            {selectedPaper.mentors && selectedPaper.mentors.length > 0
+              ? selectedPaper.mentors.map((m) => m.name).join(", ")
+              : "—"}
           </p>
           <div className="grid gap-4 mt-4">
-            {["abstract","introduction","relatedWork","methodology","experimentalResults","discussion","conclusion"].map((key) => (
+            {[
+              "abstract",
+              "introduction",
+              "objective",
+              "literature",
+              "methodology",
+              "experimentalResults",
+              "discussion",
+              "conclusion"
+            ].map((key) => (
               <div key={key}>
                 <h3 className="font-semibold capitalize border-b pb-1 text-gray-700">{key}</h3>
                 <p className="text-gray-800">{selectedPaper[key]}</p>
               </div>
             ))}
+          </div>
+          <div>
+            <h3 className="font-semibold capitalize border-b pb-1 text-gray-700 mt-4">References</h3>
+            <p className="text-gray-800">{selectedPaper.references}</p>
           </div>
         </div>
       )}
@@ -233,7 +256,16 @@ const ResearchManager = () => {
             className="w-full border px-4 py-2 rounded"
             required
           />
-          {["abstract","introduction","relatedWork","methodology","experimentalResults","discussion","conclusion"].map((key) => (
+          {[
+            "abstract",
+            "introduction",
+            "objective",
+            "literature",
+            "methodology",
+            "experimentalResults",
+            "discussion",
+            "conclusion"
+          ].map((key) => (
             <textarea
               key={key}
               name={key}
@@ -241,7 +273,7 @@ const ResearchManager = () => {
               onChange={handleChange}
               placeholder={key}
               className="w-full border px-4 py-2 rounded"
-              required
+              required={key !== "literature"}
             />
           ))}
           <input
@@ -263,13 +295,7 @@ const ResearchManager = () => {
                   value={author.name}
                   onChange={(e) => handleAuthorChange(i, "name", e.target.value)}
                   className="flex-1 border px-3 py-2 rounded"
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={author.email}
-                  onChange={(e) => handleAuthorChange(i, "email", e.target.value)}
-                  className="flex-1 border px-3 py-2 rounded"
+                  required
                 />
                 <input
                   type="text"
@@ -277,6 +303,7 @@ const ResearchManager = () => {
                   value={author.affiliation}
                   onChange={(e) => handleAuthorChange(i, "affiliation", e.target.value)}
                   className="flex-1 border px-3 py-2 rounded"
+                  required
                 />
               </div>
             ))}
@@ -286,6 +313,32 @@ const ResearchManager = () => {
               className="mt-2 px-4 py-1 bg-green-500 text-white rounded hover:bg-green-600"
             >
               + Add Author
+            </button>
+          </div>
+
+          <div>
+            <label className="font-semibold">Mentors</label>
+            {form.mentors && form.mentors.map((mentor, i) => (
+              <div key={i} className="flex flex-col sm:flex-row gap-2 mt-2">
+                <input
+                  type="text"
+                  placeholder="Mentor Name"
+                  value={mentor.name}
+                  onChange={(e) => {
+                    const updated = [...form.mentors];
+                    updated[i].name = e.target.value;
+                    setForm({ ...form, mentors: updated });
+                  }}
+                  className="flex-1 border px-3 py-2 rounded"
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, mentors: [...(form.mentors || []), { name: "" }] })}
+              className="mt-2 px-4 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              + Add Mentor
             </button>
           </div>
 
