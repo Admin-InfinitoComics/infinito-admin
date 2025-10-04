@@ -40,10 +40,9 @@ const LoginPage = () => {
     try {
       setIsSubmitting(true);
       const response = await login(data);
-      const token = response?.data?.token;
-      const admin = response?.data?.admin;
+      const admin = response?.data;
 
-      localStorage.setItem("authToken", token);
+      // Store admin info in localStorage (token is now in HTTP-only cookie)
       localStorage.setItem("Admin", JSON.stringify(admin));
 
       setShowSuccess(true);
